@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grocery List</title>
+    <!-- <link rel="stylesheet" href="styles.css"> -->
+    <link rel="stylesheet" href="styles2.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.css" integrity="sha512-x9WwyMYBnlXMNQ6kQ/Lyzu1NqIhLQKL5Oq6xByfXuRj7s9CskyCbLv/1IjqzJmXwFXWr0ov6jBV7Qbc0hh9nHg==" crossorigin="anonymous" referrerpolicy="no-referrer">
+</head>
+
+<body>
+    <h1> Your grocery list </h1>
+    <form onsubmit="return false">
+        <textarea placeholder="What do you need to remember..."> </textarea>
+        <button id="addButton"><p>Add to list </p> </button>
+        <h4> Your list will be deleted each Monday. Use the pin button if you would like to keep an item.</h4>
+    </form>
+<section>
+    <h4> Current grocery items... </h4>
+    <div class="groceryContainer">
+    
+    </div>
+    
+</section>
+<section>
+    <h4>Would you like your list emailed? If so, enter email below.</h4>
+    <form id = "settingsForm">
+        <input type = "email" id = "emailInput" placeholder="yourname@gmail.com" required>
+    <h4>Which day would you like it emailed?</h4>
+    <select id="dayInput">
+        <option value = "Monday">Monday</option>
+        <option value = "Tuesday">Tuesday</option>
+        <option value = "Wednesday">Wednesday</option>
+        <option value = "Thursday">Thursday</option>
+        <option value = "Friday">Friday</option>
+        <option value = "Saturday">Saturday</option>
+        <option value = "Sunday">Sunday</option>
+    </select>
+    <button type ="submit">Save options</button>
+    </form>
+</section>
+</body>
+<script src="index.js">
+    
+</script>
+</html>
