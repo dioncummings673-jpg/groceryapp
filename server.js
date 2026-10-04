@@ -29,46 +29,6 @@ db.exec(`
     );
 `);
 
-//Logic for resetting list each Monday
-function getResetMonday(){
-    const now = new Date();
-    const day = now.getDay();
-    let mondayResetDate;
-    if (day === 0){
-        mondayResetDate = -6;
-    } else {
-        mondayResetDate = 1;
-    }
-    const differenceToMonday = mondayResetDate - day;
-    
-    now.setDate(now.getDate() + differenceToMonday);
-    now.setHours(0, 0, 0 ,0);
-    console.log(now);
-    return now;
-    
-}
-
-function saveResetMonday(timestamp){
-    db.prepare(`
-        INSERT INTO settings (key,value) VALUES ('lastReset', ?)
-        ON CONFLICT(key) DO UPDATE SET value = excluded.value
-        `).run(String(timestamp));
-}
-
-function resetEachWeek(){
-    const monday = getResetMonday().getTime();
-    const row = db.prepare("SELECT value FROM settings WHERE key = 'lastReset'").get();
-    if(!row){
-        saveResetMonday(monday);
-        return;
-    }
-    if (monday > Number(row.value)){
-        db.prepare('DELETE FROM groceries WHERE recurring = 0').run();
-        saveResetMonday(monday);
-        
-    }
-    
-}
 //Allowing access and changing of settings (date, emails etc).
 function getSettings(key,fallback){
     const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key);
@@ -116,7 +76,6 @@ app.post('/api/settings', (req,res) =>{
 
 //To allow index to request the list to display
 app.get('/api/groceries', (req,res) =>{
-    resetEachWeek();
     const rows = db.prepare('SELECT id, text, recurring FROM groceries').all();
     res.json(rows);
 
@@ -175,7 +134,7 @@ app.patch('/api/groceries/:id', (req,res) =>{
 })
 
 
-//Function for sending the list to my email
+//Function for sending the list to my email, then deleting non-recurring items on the list
 async function sendGroceryEmail(){
     const email = getSettings('notifyEmail', '');
     if(!email){
@@ -197,11 +156,11 @@ async function sendGroceryEmail(){
         subject: 'Grocery list',
         html: listHtml
     });
-
+     db.prepare('DELETE FROM groceries WHERE recurring = 0').run();
 }
 
 //Scheduler to allow sending of email on day of choosing
-cron.schedule('* 8 * * *', () => {
+cron.schedule('0 8 * * *', () => {
   const today = new Date().toLocaleDateString('en-US', {weekday: 'long'});
   const emailDay = getSettings('notifyDay', 'Sunday');
   if(today === emailDay){

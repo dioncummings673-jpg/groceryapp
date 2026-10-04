@@ -5,9 +5,9 @@ A simple grocery list web app with a Node/Express backend, SQLite storage, and w
 ## Features
 
 - Add, edit, and delete grocery items
-- List automatically clears every Monday, keeping only recurring items
 - Pin items as **recurring** so are not cleared each week.
 - Weekly email sent with whatever is on your list currently.
+- List automatically clears after being emailed to you, excluding recurring items.
 - Data stored in a local SQLite database
 
 ## Tech stack
@@ -61,6 +61,8 @@ Then open [http://localhost:3000] in your browser.
 
 - The SQLite database file (`groceries.db`) is created automatically on first run and is not included in the repository.
 - This project was built as a learning exercise covering a full-stack CRUD app, scheduled background tasks, and third-party API integration.
+- 
+
 
 
 
