@@ -16,6 +16,7 @@
     "dotenv": "^18.0.5",
     "express": "^5.2.1",
     "node-cron": "^4.6.0",
-    "resend": "^6.31.0"
+    "resend": "^6.31.0",
+    "typescript": "^7.0.2"
   }
 }
