@@ -208,6 +208,50 @@ cron.schedule('0 8 * * *', () => {
   }
 });
 
+
+//Allows for adding of users
+app.post('/api/register', async (req,res) =>{
+    let username = '';
+    if (typeof req.body.username === 'string'){
+        username = req.body.username.trim();
+    }
+    let email = '';
+    if (typeof req.body.email === 'string'){
+        email = req.body.email.trim();
+    }
+    let password = '';
+    if (typeof req.body.password === 'string'){
+        password = req.body.password;
+    }
+
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+        return res.status(400).json({error: 'Please enter a valid email address'});
+    }
+    if(password.length < 8 || password.length > 72){
+        return res.status(400).json({error: 'Password must be between 8 and 72 characters'});
+    }
+
+    const existing = db.prepare('SELECT id FROM users WHERE username = ?').get(username);
+    if(existing){
+        return res.status(409).json({error: 'Username already taken'});
+    }
+
+    try{
+        const hash = await bcrypt.hash(password, SALT_ROUNDS);
+        db.prepare('INSERT INTO users(username, email, password_hash) VALUES (?, ?, ?)').run(username, email, hash);
+        res.status(201).json({message: 'Account created successfully'});
+
+    } catch(err){
+        if(err.code === 'SQLITE_CONSTRAINT_UNIQUE'){
+            return res.status(409).json({error: 'Username already taken'});
+        }
+        console.error(err);
+        res.status(500).json({error: 'Something went wrong'});
+    }
+
+
+
+});
 app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
 });

@@ -12,6 +12,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "better-sqlite3": "^13.0.3",
     "better-sqlite3-session-store": "^0.1.0",
     "crypt": "^0.0.2",
