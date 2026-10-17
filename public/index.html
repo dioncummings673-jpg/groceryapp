@@ -13,6 +13,11 @@
 </head>
 
 <body>
+    <div id="userBar">
+    <span id="welcome"></span>
+    <a href="/account/change-password.html">Change password</a>
+    <button id="logoutButton">Log out</button>
+    </div>
     <h1> Your grocery list </h1>
     <form onsubmit="return false">
         <textarea placeholder="What do you need to remember..."> </textarea>
@@ -44,6 +49,26 @@
     </form>
 </section>
 </body>
+
+<script>
+async function loadUser(){
+    const response = await fetch('/api/me');
+    if(response.ok){
+        const data = await response.json();
+        document.getElementById('welcome').textContent = 'Logged in as ' + data.username;
+    } else {
+        window.location.href = '/account/login.html';
+    }
+}
+loadUser();
+
+document.getElementById('logoutButton').addEventListener('click', async () => {
+    await fetch('/api/logout', {method: 'POST'});
+    window.location.href = '/account/login.html';
+});
+
+
+</script>
 <script src="index.js">
     
 </script>

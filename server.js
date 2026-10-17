@@ -12,10 +12,9 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const cron = require('node-cron');
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+
 
 const database = require('better-sqlite3');
-
 const session = require('express-session');
 const SqliteStore = require('better-sqlite3-session-store')(session);
 
@@ -59,12 +58,15 @@ function setSettings(key,value){
         ON CONFLICT(key) DO UPDATE SET value = excluded.value`).run(key,value);
 }
 
+
 //Cookie creation to create login session
 let newCookie = false;
 if(process.env.NODE_ENV === 'production'){
     newCookie = true;
 }
 
+
+//setup for cookie production
 app.use(session({
     store: new SqliteStore({
         client: db,
@@ -83,15 +85,35 @@ app.use(session({
     }
 }))
 
+
+//Only allows users to access the list if they have logged in
+function requireLogin(req,res,next){
+    if(!req.session.userId){
+        return res.status(401).json({error: 'Not logged in, cant view this content'})
+    }
+    next();
+}
+//Sends logged out users to login page
+app.use((req,res,next)=>{
+    if((req.path === '/' || req.path === '/index.html') && !req.session.userId){
+        return res.redirect('/account/login.html');
+    }
+    next();
+
+})
+
+app.use(express.static(path.join(__dirname, 'public')));
+
+
 //Fetching settings on request
-app.get('/api/settings',(req,res)=>{
+app.get('/api/settings', requireLogin,(req,res)=>{
     res.json({
         email:getSettings('notifyEmail', ''),
         day: getSettings('notifyDay', 'Sunday')
     })
 })
 //Altering settings on request
-app.post('/api/settings', (req,res) =>{
+app.post('/api/settings', requireLogin, (req,res) =>{
     let email;
         if(typeof req.body.email === 'string'){
             email =  req.body.email.trim();
@@ -115,21 +137,21 @@ app.post('/api/settings', (req,res) =>{
 })
 
 //To allow index to request the list to display
-app.get('/api/groceries', (req,res) =>{
+app.get('/api/groceries', requireLogin, (req,res) =>{
     const rows = db.prepare('SELECT id, text, recurring FROM groceries').all();
     res.json(rows);
 
 })
 
 //Allows addition of items to the database
-app.post('/api/groceries', (req,res) =>{
+app.post('/api/groceries', requireLogin, (req,res) =>{
     const text = req.body.text;
     const info = db.prepare('INSERT INTO groceries (text) VALUES (?)').run(text);
     res.status(201).json({id:info.lastInsertRowid, text, recurring: false});
 })
 
 //Allows deletion of items from the database
-app.delete('/api/groceries/:id', (req, res)=>{
+app.delete('/api/groceries/:id', requireLogin, (req, res)=>{
     const id = Number(req.params.id);
     const info = db.prepare('DELETE FROM groceries WHERE id = ?').run(id);
     if(info.changes === 0){
@@ -140,7 +162,7 @@ app.delete('/api/groceries/:id', (req, res)=>{
 })
 
 //Allows editing of grocery items in the database.
-app.patch('/api/groceries/:id', (req,res) =>{
+app.patch('/api/groceries/:id', requireLogin, (req,res) =>{
     const id =Number(req.params.id);
     const existingGrocery = db.prepare('SELECT id, text, recurring FROM groceries WHERE id =?').get(id);
 
