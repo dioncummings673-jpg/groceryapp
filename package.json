@@ -13,8 +13,11 @@
   "type": "commonjs",
   "dependencies": {
     "better-sqlite3": "^13.0.3",
+    "better-sqlite3-session-store": "^0.1.0",
+    "crypt": "^0.0.2",
     "dotenv": "^18.0.5",
     "express": "^5.2.1",
+    "express-session": "^1.19.0",
     "node-cron": "^4.6.0",
     "resend": "^6.31.0",
     "typescript": "^7.0.2"

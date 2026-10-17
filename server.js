@@ -3,6 +3,8 @@ const path = require('path');
 
 const app = express();
 const PORT = process.env.port || 3000;
+const bcrypt = require('bcrypt');
+const SALT_ROUNDS = 12;
 
 require('dotenv').config();
 const {Resend} = require('resend');
@@ -13,20 +15,33 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 const database = require('better-sqlite3');
-const { type } = require('os');
+
+const session = require('express-session');
+const SqliteStore = require('better-sqlite3-session-store')(session);
+
 
 //Sets up DB with necessary tables to store data
 const db = new database(path.join(__dirname, 'groceries.db'));
 db.exec(`
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT NOT NULL UNIQUE COLLATE NOCASE,
+        email TEXT NOT NULL,
+        password_hash TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
     CREATE TABLE IF NOT EXISTS groceries (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         text TEXT NOT NULL,
-        recurring INTEGER NOT NULL DEFAULT 0
+        recurring INTEGER NOT NULL DEFAULT 0,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE
     );
     CREATE TABLE IF NOT EXISTS settings (
         key TEXT PRIMARY KEY,
         value TEXT NOT NULL
     );
+    
+
 `);
 
 //Allowing access and changing of settings (date, emails etc).
@@ -43,6 +58,31 @@ function setSettings(key,value){
     db.prepare(`INSERT INTO settings (key,value) VALUES (?,?)
         ON CONFLICT(key) DO UPDATE SET value = excluded.value`).run(key,value);
 }
+
+//Cookie creation to create login session
+let newCookie = false;
+if(process.env.NODE_ENV === 'production'){
+    newCookie = true;
+}
+
+app.use(session({
+    store: new SqliteStore({
+        client: db,
+        expired:{clear : true, intervalMs: 15 * 60 * 1000}
+
+    }),
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+
+    cookie: {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: newCookie,
+        maxAge: 24 * 60 * 60 * 1000
+    }
+}))
+
 //Fetching settings on request
 app.get('/api/settings',(req,res)=>{
     res.json({
